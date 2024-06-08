@@ -1,8 +1,9 @@
+import 'package:Zebrot/automatic.dart';
 import 'package:flutter/material.dart';
 
 import 'dart:async';
 
-import 'package:neeicum/manual.dart';
+import 'package:Zebrot/manual.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -98,7 +99,7 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.only(left: 20, right: 20),
                 child: Text(
-                  "Constituintes",
+                  "Equipa",
                   style: Theme.of(context).textTheme.headlineMedium!.copyWith(
                       color: Colors.black,
                       fontWeight: FontWeight.w600,
@@ -263,7 +264,13 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.only(left: 20, right: 20, top: 20),
                 child: GestureDetector(
-                  onTap: () {},
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const AutomaticPage()),
+                    );
+                  },
                   child: Container(
                     width: MediaQuery.of(context).size.width,
                     height: MediaQuery.of(context).size.width * 0.2,
@@ -334,7 +341,7 @@ class _HomePageState extends State<HomePage> {
                                       width: MediaQuery.of(context).size.width *
                                           0.45,
                                       child: Text(
-                                        "Computer Vision",
+                                        "Automatic",
                                         style: TextStyle(
                                             fontWeight: FontWeight.bold,
                                             fontSize: 20),

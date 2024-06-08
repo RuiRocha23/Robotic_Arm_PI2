@@ -1,23 +1,17 @@
 import 'dart:ffi';
-
+import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
-import 'communication.dart';
-import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'dart:async';
+import 'dart:math';
 
-class Motor {
-  int angle;
-  String name;
+class Axes {
+  String type;
+  int current;
+  int max;
+  int min;
 
-  Motor(this.angle, this.name);
+  Axes(this.type, this.current, this.max, this.min);
 }
-
-List<Motor> Motors = [
-  Motor(90, "M1"),
-  Motor(180, "M2"),
-  Motor(270, "M3"),
-  Motor(360, "M4"),
-];
 
 class ManualPage extends StatefulWidget {
   const ManualPage({super.key});
@@ -27,53 +21,112 @@ class ManualPage extends StatefulWidget {
 }
 
 class _ManualPageState extends State<ManualPage> {
-  BluetoothState _bluetoothState = BluetoothState.UNKNOWN;
+  final firebaseRef = FirebaseDatabase(
+          databaseURL:
+              "https://zebrot-2577d-default-rtdb.europe-west1.firebasedatabase.app")
+      .ref();
+  DatabaseReference dbRef = FirebaseDatabase(
+          databaseURL:
+              "https://zebrot-2577d-default-rtdb.europe-west1.firebasedatabase.app")
+      .ref();
   bool isPressed = false;
-  String _address = "...";
-  String _name = "...";
+  Timer? timer;
+  List<int> x_values = [];
+  List<int> y_values = [];
+  List<int> z_values = [];
+  Map datamap = {};
+  List<Axes> Axle = [
+    Axes("X", 0, 300, -5),
+    Axes("Y", 0, 300, -5),
+    Axes("Z", 0, 300, -5),
+  ];
 
   @override
   void initState() {
     super.initState();
-    FlutterBluetoothSerial.instance.state.then(
-      (state) {
-        setState(() {
-          _bluetoothState = state;
-        });
-      },
-    );
-
-    Future.doWhile(() async {
-      // Wait if adapter not enabled
-      if (await FlutterBluetoothSerial.instance.isEnabled != null) {
-        return false;
-      }
-      await Future.delayed(Duration(milliseconds: 0xDD));
-      return true;
-    }).then((_) {
-      // Update the address field
-      FlutterBluetoothSerial.instance.address.then((address) {
-        setState(() {
-          _address = address!;
-        });
-      });
+    Stream<DatabaseEvent> stream = dbRef.onValue;
+    stream.listen((DatabaseEvent event) {
+      updateInfo(event.snapshot.children);
     });
+  }
 
-    FlutterBluetoothSerial.instance
-        .onStateChanged()
-        .listen((BluetoothState state) {
-      setState(() {
-        _bluetoothState = state;
+  void updateInfo(data) {
+    setState(() {
+      datamap.clear();
+      data.forEach((child) {
+        datamap[child.key] = child.value;
       });
     });
   }
 
-  /*void init() async {
-    Communication com = Communication();
-    await com.connectBl(_address);
-    com.sendMessage("Hello");
-    setState(() {});
-  }*/
+  void Regist_Program() {
+    DatabaseReference dbRef = firebaseRef;
+
+    int prog_counter = datamap.keys.length;
+    print(prog_counter);
+    if (x_values.isNotEmpty) {
+      for (int j = 0; j < x_values.length; j++) {
+        DatabaseReference ref2 =
+            dbRef.child("Program ${prog_counter + 1}").child("Posicion ${j}");
+        ref2.set({
+          "X": x_values[j],
+          "Y": y_values[j],
+          "Z": z_values[j],
+        });
+      }
+    }
+  }
+
+  void addValues() {
+    setState(() {
+      x_values.add(Axle[0].current);
+      y_values.add(Axle[1].current);
+      z_values.add(Axle[2].current);
+    });
+  }
+
+  void ClearValues() {
+    setState(() {
+      x_values.clear();
+      y_values.clear();
+      z_values.clear();
+    });
+  }
+
+  void showLimitExceededSnackbar(BuildContext context, String feedback) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        backgroundColor: Colors.orange,
+        content: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.save,
+              size: 32, // Adjust the size of the icon as needed.
+              color: Colors.white, // Adjust the icon color as needed.
+            ),
+            SizedBox(width: 10), // Add some spacing between the icon and text.
+            Text(
+              feedback,
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 18, // Adjust the font size of the text as needed.
+              ),
+            ),
+          ],
+        ),
+        duration: Duration(seconds: 1),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(20), // Adjust the border radius as needed.
+            topRight:
+                Radius.circular(20), // Adjust the border radius as needed.
+          ),
+        ), // Adjust the duration as needed.
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -103,11 +156,11 @@ class _ManualPageState extends State<ManualPage> {
                     ListView.builder(
                         clipBehavior: Clip.none,
                         //controller: _scrollController1,
-                        //physics: NeverScrollableScrollPhysics(),
+                        physics: NeverScrollableScrollPhysics(),
                         //padding: EdgeInsets.only(/*top: 5, bottom: 35.0*/),
                         scrollDirection: Axis.vertical,
                         shrinkWrap: true,
-                        itemCount: Motors.length,
+                        itemCount: Axle.length,
                         itemBuilder: (BuildContext context, int index) {
                           return Padding(
                             padding: const EdgeInsets.only(
@@ -141,15 +194,41 @@ class _ManualPageState extends State<ManualPage> {
                                                           MediaQuery.of(context)
                                                                   .size
                                                                   .width *
-                                                              0.2,
+                                                              0.29,
                                                       child: Text(
-                                                        "Motor ${index + 1}",
+                                                        "Axle ${Axle[index].type}",
                                                         style: TextStyle(
                                                             fontWeight:
                                                                 FontWeight.bold,
                                                             fontSize: 20),
                                                         overflow: TextOverflow
                                                             .ellipsis,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                  Align(
+                                                    alignment:
+                                                        Alignment.centerRight,
+                                                    child: Padding(
+                                                      padding:
+                                                          const EdgeInsets.all(
+                                                              8.0),
+                                                      child: Container(
+                                                        width: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            0.1,
+                                                        child: Text(
+                                                          "${Axle[index].current}",
+                                                          style: TextStyle(
+                                                              fontWeight:
+                                                                  FontWeight
+                                                                      .bold,
+                                                              fontSize: 20),
+                                                          overflow: TextOverflow
+                                                              .ellipsis,
+                                                        ),
                                                       ),
                                                     ),
                                                   ),
@@ -196,83 +275,135 @@ class _ManualPageState extends State<ManualPage> {
                                                           color: Colors.white,
                                                         ),
                                                       ),
-                                                      onTapDown: (_) {
+                                                      onTap: () {
                                                         setState(() {
-                                                          Motors[index].angle++;
+                                                          if (Axle[index]
+                                                                  .current <
+                                                              Axle[index].max) {
+                                                            Axle[index]
+                                                                .current++;
+                                                            String temp =
+                                                                "${Axle[index].type} ${Axle[index].current}";
+                                                            print(temp);
+                                                          }
                                                         });
                                                       },
-                                                      onTapUp: (_) {},
+                                                      onLongPressStart:
+                                                          (detail) {
+                                                        setState(() {
+                                                          timer = Timer.periodic(
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      100),
+                                                              (t) {
+                                                            setState(() {
+                                                              if (Axle[index]
+                                                                      .current <
+                                                                  Axle[index]
+                                                                      .max) {
+                                                                Axle[index]
+                                                                    .current++;
+                                                                String temp =
+                                                                    "${Axle[index].type} ${Axle[index].current}";
+                                                                print(temp);
+                                                              }
+                                                            });
+                                                          });
+                                                        });
+                                                      },
+                                                      onLongPressEnd: (detail) {
+                                                        if (timer != null) {
+                                                          timer!.cancel();
+                                                        }
+                                                      },
                                                     ),
                                                   ),
                                                   Padding(
                                                     padding:
                                                         const EdgeInsets.only(
                                                             left: 10),
-                                                    child: Container(
-                                                      height:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.13,
-                                                      width:
-                                                          MediaQuery.of(context)
-                                                                  .size
-                                                                  .width *
-                                                              0.13,
-                                                      padding:
-                                                          EdgeInsets.all(0),
-                                                      decoration:
-                                                          const BoxDecoration(
-                                                        color: const Color
-                                                            .fromARGB(
-                                                            255, 66, 66, 66),
-                                                        boxShadow: [
-                                                          BoxShadow(
-                                                              color:
-                                                                  Colors.grey,
-                                                              blurRadius: 30,
-                                                              offset:
-                                                                  Offset(0, 10))
-                                                        ],
-                                                        borderRadius:
-                                                            const BorderRadius
-                                                                .all(
-                                                                Radius.circular(
-                                                                    20)),
-                                                      ),
-                                                      child: Icon(
-                                                        size: 30,
-                                                        Icons.remove,
-                                                        color: Colors.white,
-                                                      ),
-                                                    ),
-                                                  ),
-                                                  Align(
-                                                    alignment:
-                                                        Alignment.centerRight,
-                                                    child: Padding(
-                                                      padding:
-                                                          const EdgeInsets.all(
-                                                              8.0),
+                                                    child: GestureDetector(
+                                                      onTap: () {
+                                                        setState(() {
+                                                          if (Axle[index]
+                                                                  .current >
+                                                              Axle[index].min) {
+                                                            Axle[index]
+                                                                .current--;
+                                                            String temp =
+                                                                "${Axle[index].type} ${Axle[index].current}";
+                                                            print(temp);
+                                                          }
+                                                        });
+                                                      },
+                                                      onLongPressStart:
+                                                          (detail) {
+                                                        setState(() {
+                                                          timer = Timer.periodic(
+                                                              const Duration(
+                                                                  milliseconds:
+                                                                      100),
+                                                              (t) {
+                                                            setState(() {
+                                                              if (Axle[index]
+                                                                      .current >
+                                                                  Axle[index]
+                                                                      .min) {
+                                                                Axle[index]
+                                                                    .current--;
+                                                                String temp =
+                                                                    "${Axle[index].type} ${Axle[index].current}";
+                                                                print(temp);
+                                                              }
+                                                            });
+                                                          });
+                                                        });
+                                                      },
+                                                      onLongPressEnd: (detail) {
+                                                        if (timer != null) {
+                                                          timer!.cancel();
+                                                        }
+                                                      },
                                                       child: Container(
+                                                        height: MediaQuery.of(
+                                                                    context)
+                                                                .size
+                                                                .width *
+                                                            0.13,
                                                         width: MediaQuery.of(
                                                                     context)
                                                                 .size
                                                                 .width *
-                                                            0.2,
-                                                        child: Text(
-                                                          "${Motors[index].angle}",
-                                                          style: TextStyle(
-                                                              fontWeight:
-                                                                  FontWeight
-                                                                      .bold,
-                                                              fontSize: 20),
-                                                          overflow: TextOverflow
-                                                              .ellipsis,
+                                                            0.13,
+                                                        padding:
+                                                            EdgeInsets.all(0),
+                                                        decoration:
+                                                            const BoxDecoration(
+                                                          color: const Color
+                                                              .fromARGB(
+                                                              255, 66, 66, 66),
+                                                          boxShadow: [
+                                                            BoxShadow(
+                                                                color:
+                                                                    Colors.grey,
+                                                                blurRadius: 30,
+                                                                offset: Offset(
+                                                                    0, 10))
+                                                          ],
+                                                          borderRadius:
+                                                              const BorderRadius
+                                                                  .all(Radius
+                                                                      .circular(
+                                                                          20)),
+                                                        ),
+                                                        child: Icon(
+                                                          size: 30,
+                                                          Icons.remove,
+                                                          color: Colors.white,
                                                         ),
                                                       ),
                                                     ),
-                                                  )
+                                                  ),
                                                 ],
                                               ),
                                             ),
@@ -286,6 +417,215 @@ class _ManualPageState extends State<ManualPage> {
                             ),
                           );
                         }),
+                    Row(
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: 20, right: 20, top: 20),
+                          child: GestureDetector(
+                            onTap: () {
+                              addValues();
+                              print(x_values);
+                              showLimitExceededSnackbar(
+                                  context, 'Position Saved');
+                            },
+                            child: Container(
+                              width:
+                                  (MediaQuery.of(context).size.width / 2) - 30,
+                              height: MediaQuery.of(context).size.width * 0.2,
+                              decoration: BoxDecoration(
+                                color: Colors.orange,
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20)),
+                                boxShadow: [
+                                  BoxShadow(
+                                      color: Colors.grey,
+                                      blurRadius: 30,
+                                      offset: Offset(0, 10))
+                                ],
+                              ),
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 20),
+                                      child: Row(
+                                        children: [
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Row(
+                                              children: [
+                                                Padding(
+                                                  padding: EdgeInsets.only(
+                                                      left: 10, right: 30),
+                                                  child: Container(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.2,
+                                                    child: Text(
+                                                      "Save\nPosition",
+                                                      style: TextStyle(
+                                                          fontWeight:
+                                                              FontWeight.bold,
+                                                          fontSize: 20),
+                                                      overflow:
+                                                          TextOverflow.ellipsis,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.only(
+                              left: 0, right: 20, top: 20),
+                          child: GestureDetector(
+                            onTap: () {
+                              Regist_Program();
+                              ClearValues();
+                              showLimitExceededSnackbar(
+                                  context, 'Program Saved');
+                            },
+                            child: Container(
+                              width:
+                                  (MediaQuery.of(context).size.width / 2) - 30,
+                              height: MediaQuery.of(context).size.width * 0.2,
+                              decoration: BoxDecoration(
+                                color: const Color.fromARGB(255, 66, 66, 66),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20)),
+                                boxShadow: [
+                                  BoxShadow(
+                                      color: Colors.grey,
+                                      blurRadius: 30,
+                                      offset: Offset(0, 10))
+                                ],
+                              ),
+                              child: Stack(
+                                children: [
+                                  Container(
+                                    child: Padding(
+                                      padding: const EdgeInsets.only(left: 20),
+                                      child: Row(
+                                        children: [
+                                          Align(
+                                            alignment: Alignment.centerLeft,
+                                            child: Row(
+                                              children: [
+                                                Padding(
+                                                  padding: EdgeInsets.only(
+                                                      left: 10, right: 30),
+                                                  child: Container(
+                                                    width:
+                                                        MediaQuery.of(context)
+                                                                .size
+                                                                .width *
+                                                            0.2,
+                                                    child: Center(
+                                                      child: Text(
+                                                        "Save\nProgram",
+                                                        style: TextStyle(
+                                                            color: Colors.white,
+                                                            fontWeight:
+                                                                FontWeight.bold,
+                                                            fontSize: 20),
+                                                        overflow: TextOverflow
+                                                            .ellipsis,
+                                                      ),
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(
+                          left: 20, right: 20, top: 20, bottom: 20),
+                      child: GestureDetector(
+                        onTap: () {
+                          /*Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                                builder: (context) => const BluetoothScreen()),
+                          );*/
+                        },
+                        child: Container(
+                          width: MediaQuery.of(context).size.width,
+                          height: MediaQuery.of(context).size.width * 0.2,
+                          decoration: BoxDecoration(
+                            color: Colors.orange,
+                            borderRadius: BorderRadius.all(Radius.circular(20)),
+                            boxShadow: [
+                              BoxShadow(
+                                  color: Colors.grey,
+                                  blurRadius: 30,
+                                  offset: Offset(0, 10))
+                            ],
+                          ),
+                          child: Stack(
+                            children: [
+                              Container(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: Row(
+                                    children: [
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Row(
+                                          children: [
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                  left: 10, right: 30),
+                                              child: Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.5,
+                                                child: Text(
+                                                  "Configurations",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 20),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),

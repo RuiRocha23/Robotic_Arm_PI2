@@ -10,7 +10,6 @@ image = cv2.imread("rustic.jpeg")
 #image = cv2.warpPerspective(image3, matrix, (800, 600))
 default = image.copy()
 
-
 image2= image.copy()
 
 def trackbarcallback(value):
