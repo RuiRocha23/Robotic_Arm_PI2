@@ -16,12 +16,10 @@ import 'home.dart';
 StreamController<BluetoothConnection> streamController =
     StreamController<BluetoothConnection>();
 
-final FlutterBluetoothSerial flutterBlue = FlutterBluetoothSerial.instance;
-BluetoothDevice ourDevice = null as BluetoothDevice;
-List<BluetoothDevice> device_list = [];
-BluetoothState BLstate = BluetoothState.UNKNOWN;
-BluetoothConnection connection = null as BluetoothConnection;
-bool isConnected = false;
+FlutterBluetoothSerial bluetooth = FlutterBluetoothSerial.instance;
+List<BluetoothDevice> devicesList = [];
+BluetoothDevice? connectedDevice;
+BluetoothConnection? connection;
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -50,7 +48,9 @@ class MyApp extends StatelessWidget {
   }
 }
 ////////////////////////////////////////////////////////////////////////////////////////
-/*import 'package:flutter/material.dart';
+/*import 'dart:convert';
+
+import 'package:flutter/material.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -90,7 +90,6 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     //await Permission.location.request();
 
     scanForDevices();
-    connectToRasp();
     print(devicesList);
   }
 
@@ -127,6 +126,13 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
     print(connectedDevice);
   }
 
+  void _sendData() async {
+    if (connection != null && connection!.isConnected) {
+      connection!.output.add(ascii.encode('Hello, Bluetooth!\r\n'));
+      await connection!.output.allSent;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -138,7 +144,7 @@ class _BluetoothScreenState extends State<BluetoothScreen> {
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: ElevatedButton(
-              onPressed: printd,
+              onPressed: _sendData,
               child: Text("print"),
             ),
           ),

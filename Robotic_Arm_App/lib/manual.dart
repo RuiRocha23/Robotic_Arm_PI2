@@ -1,8 +1,11 @@
+import 'dart:convert';
 import 'dart:ffi';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
+import 'home.dart';
+import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
 
 class Axes {
   String type;
@@ -48,6 +51,16 @@ class _ManualPageState extends State<ManualPage> {
     stream.listen((DatabaseEvent event) {
       updateInfo(event.snapshot.children);
     });
+  }
+
+  void _sendData() async {
+    if (connection != null && connection!.isConnected) {
+      String temp =
+          "${Axle[0].current} ${Axle[1].current} ${Axle[2].current}\n";
+      connection!.output.add(ascii.encode(temp));
+      print(connection);
+      await connection!.output.allSent;
+    }
   }
 
   void updateInfo(data) {
@@ -285,6 +298,7 @@ class _ManualPageState extends State<ManualPage> {
                                                             String temp =
                                                                 "${Axle[index].type} ${Axle[index].current}";
                                                             print(temp);
+                                                            _sendData();
                                                           }
                                                         });
                                                       },
@@ -306,6 +320,7 @@ class _ManualPageState extends State<ManualPage> {
                                                                 String temp =
                                                                     "${Axle[index].type} ${Axle[index].current}";
                                                                 print(temp);
+                                                                _sendData();
                                                               }
                                                             });
                                                           });
@@ -332,6 +347,7 @@ class _ManualPageState extends State<ManualPage> {
                                                                 .current--;
                                                             String temp =
                                                                 "${Axle[index].type} ${Axle[index].current}";
+                                                            _sendData();
                                                             print(temp);
                                                           }
                                                         });
@@ -353,6 +369,7 @@ class _ManualPageState extends State<ManualPage> {
                                                                     .current--;
                                                                 String temp =
                                                                     "${Axle[index].type} ${Axle[index].current}";
+                                                                _sendData();
                                                                 print(temp);
                                                               }
                                                             });

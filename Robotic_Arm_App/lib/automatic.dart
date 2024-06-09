@@ -1,8 +1,10 @@
+import 'dart:convert';
 import 'dart:ffi';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'dart:math';
+import 'home.dart';
 
 class AutomaticPage extends StatefulWidget {
   const AutomaticPage({super.key});
@@ -70,10 +72,19 @@ class _AutomaticPageState extends State<AutomaticPage> {
       var programData = programAtIndex.value;
 
       programData.forEach((positionName, positionData) {
-        print("${positionData['X']} ${positionData['Y']} ${positionData['Z']}");
+        String temp =
+            "${positionData['X']} ${positionData['Y']} ${positionData['Z']}\n";
+        _sendData(temp);
       });
     } else {
       print('Index out of range.');
+    }
+  }
+
+  void _sendData(String temp) async {
+    if (connection != null && connection!.isConnected) {
+      connection!.output.add(ascii.encode(temp));
+      await connection!.output.allSent;
     }
   }
 
