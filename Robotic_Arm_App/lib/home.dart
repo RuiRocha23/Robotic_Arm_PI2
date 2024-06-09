@@ -12,10 +12,36 @@ class HomePage extends StatefulWidget {
   State<HomePage> createState() => _HomePageState();
 }
 
+class ImageData {
+  final String imagePath;
+  final String name;
+
+  ImageData({required this.imagePath, required this.name});
+}
+
 class _HomePageState extends State<HomePage> {
   ScrollController _scrollController1 = ScrollController();
   Map datamap = {};
   Map mainData = {};
+
+  final List<ImageData> images = [
+    ImageData(
+        imagePath:
+            'https://github.com/RuiRocha23/imagens/blob/main/imaagens/Artboard%201Rocha.png?raw=true',
+        name: 'Rui Rocha'),
+    ImageData(
+        imagePath:
+            'https://github.com/RuiRocha23/imagens/blob/main/imaagens/Artboard%201Tiago.png?raw=true',
+        name: 'Tiago Teixeira'),
+    ImageData(
+        imagePath:
+            'https://github.com/RuiRocha23/imagens/blob/main/imaagens/Artboard%201Chris.png?raw=true',
+        name: 'Christian Garcia'),
+    ImageData(
+        imagePath:
+            'https://github.com/RuiRocha23/imagens/blob/main/w_background/Gon%C3%A7alo.png?raw=true',
+        name: 'Gonçalo Oliveira'),
+  ];
 
   @override
   void initState() {
@@ -57,16 +83,30 @@ class _HomePageState extends State<HomePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const SizedBox(height: 40),
+              const SizedBox(height: 10),
+              Padding(
+                padding: const EdgeInsets.only(left: 20, right: 20),
+                child: Text(
+                  "Zebrot APP",
+                  style: Theme.of(context).textTheme.headlineMedium!.copyWith(
+                      color: Colors.black,
+                      fontWeight: FontWeight.w600,
+                      fontSize: scaleFactor / 3),
+                ),
+              ),
+              const SizedBox(height: 10),
               Center(
                 child: Padding(
                   padding:
-                      EdgeInsets.all(MediaQuery.of(context).size.width / 20),
+                      EdgeInsets.all(MediaQuery.of(context).size.width / 50),
                   child: Column(
                     children: [
                       Padding(
-                        padding: const EdgeInsets.only(top: 0, bottom: 20),
-                        child: Image.asset("assets/images/Zebrot.png"),
+                        padding: const EdgeInsets.only(top: 0, bottom: 0),
+                        child: Image.asset(
+                          "assets/images/Zebrot.png",
+                          scale: 1.5,
+                        ),
                       ),
 
                       /*Text(
@@ -82,7 +122,7 @@ class _HomePageState extends State<HomePage> {
                     ],
                   ),
                 ),
-              ),
+              ), ////////////
               /*Padding(
                 padding: const EdgeInsets.only(
                   left: 20,
@@ -99,7 +139,7 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.only(left: 20, right: 20),
                 child: Text(
-                  "Equipa",
+                  "Team",
                   style: Theme.of(context).textTheme.headlineMedium!.copyWith(
                       color: Colors.black,
                       fontWeight: FontWeight.w600,
@@ -107,7 +147,7 @@ class _HomePageState extends State<HomePage> {
                 ),
               ),
               Container(
-                height: 150,
+                height: 170,
                 child: ListView.builder(
                     clipBehavior: Clip.none,
                     controller: _scrollController1,
@@ -115,40 +155,36 @@ class _HomePageState extends State<HomePage> {
                     padding: EdgeInsets.only(/*top: 5, bottom: 35.0*/),
                     scrollDirection: Axis.horizontal,
                     //shrinkWrap: true,
-                    itemCount: 4,
+                    itemCount: images.length,
                     itemBuilder: (BuildContext context, int index) {
                       return Padding(
-                          padding: const EdgeInsets.only(left: 20, top: 20),
+                          padding: const EdgeInsets.only(left: 0, top: 0),
                           child: Column(
                             children: [
                               GestureDetector(
                                 child: Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 16, vertical: 24),
-                                    height: 110,
-                                    width: 110,
-                                    decoration: const BoxDecoration(
-                                      color:
-                                          const Color.fromARGB(255, 66, 66, 66),
-                                      boxShadow: [
-                                        BoxShadow(
-                                            color: Colors.grey,
-                                            blurRadius: 30,
-                                            offset: Offset(0, 10))
-                                      ],
-                                      borderRadius: const BorderRadius.all(
-                                          Radius.circular(20)),
-                                    ),
-                                    child: Center(
-                                      child: Padding(
-                                        padding: const EdgeInsets.symmetric(
-                                            horizontal: 0.0, vertical: 0),
-                                        child: Image.asset(
-                                            "assets/images/logo_w.png"),
-                                      ),
-                                    )),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 20, vertical: 10),
+                                  height: 130,
+                                  width: 140,
+                                  decoration: BoxDecoration(
+                                    shape: BoxShape.circle,
+                                    boxShadow: [
+                                      BoxShadow(
+                                          color: Colors.grey,
+                                          blurRadius: 40,
+                                          offset: Offset(0, 7))
+                                    ],
+                                  ),
+                                  child: CircleAvatar(
+                                    backgroundColor:
+                                        const Color.fromARGB(255, 61, 60, 60),
+                                    backgroundImage:
+                                        NetworkImage(images[index].imagePath),
+                                  ),
+                                ),
                               ),
-                              Text("Rui")
+                              Text(images[index].name)
                             ],
                           ));
                     }),
@@ -156,7 +192,7 @@ class _HomePageState extends State<HomePage> {
               Padding(
                 padding: const EdgeInsets.only(left: 20, right: 20),
                 child: Text(
-                  "Programas",
+                  "Programs",
                   style: Theme.of(context).textTheme.headlineMedium!.copyWith(
                       color: Colors.black,
                       fontWeight: FontWeight.w600,
@@ -440,7 +476,7 @@ class _HomePageState extends State<HomePage> {
                                         overflow: TextOverflow.ellipsis,
                                       ),
                                     ),
-                                  )
+                                  ),
                                 ],
                               ),
                             ),
@@ -451,6 +487,9 @@ class _HomePageState extends State<HomePage> {
                   ),
                 ),
               ),
+              SizedBox(
+                height: 20,
+              )
             ],
           ),
         ),

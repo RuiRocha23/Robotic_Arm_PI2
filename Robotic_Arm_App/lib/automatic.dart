@@ -298,6 +298,41 @@ class _AutomaticPageState extends State<AutomaticPage> {
                           const EdgeInsets.only(left: 20, right: 20, top: 20),
                       child: GestureDetector(
                         onTap: () {
+                          print("MV");
+                        },
+                        child: Container(
+                            width: MediaQuery.of(context).size.width,
+                            height: MediaQuery.of(context).size.width * 0.2,
+                            decoration: BoxDecoration(
+                                color: const Color.fromARGB(255, 66, 66, 66),
+                                borderRadius:
+                                    BorderRadius.all(Radius.circular(20))),
+                            child: Center(
+                                child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Icon(
+                                  size: 30,
+                                  Icons.remove_red_eye_rounded,
+                                  color: Colors.white,
+                                ),
+                                Text(
+                                  " Vision Mode",
+                                  style: TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 30),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ))),
+                      ),
+                    ),
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(left: 20, right: 20, top: 20),
+                      child: GestureDetector(
+                        onTap: () {
                           print("START");
                         },
                         child: Container(
