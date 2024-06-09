@@ -6,6 +6,7 @@ import 'dart:async';
 import 'dart:math';
 import 'home.dart';
 import 'package:flutter_bluetooth_serial/flutter_bluetooth_serial.dart';
+import 'package:lite_rolling_switch/lite_rolling_switch.dart';
 
 class Axes {
   String type;
@@ -37,7 +38,9 @@ class _ManualPageState extends State<ManualPage> {
   List<int> x_values = [];
   List<int> y_values = [];
   List<int> z_values = [];
+  List<int> g_values = [];
   Map datamap = {};
+  int grip = 0;
   List<Axes> Axle = [
     Axes("X", 0, 300, -5),
     Axes("Y", 0, 300, -5),
@@ -56,7 +59,7 @@ class _ManualPageState extends State<ManualPage> {
   void _sendData() async {
     if (connection != null && connection!.isConnected) {
       String temp =
-          "${Axle[0].current} ${Axle[1].current} ${Axle[2].current}\n";
+          "${grip} ${Axle[0].current} ${Axle[1].current} ${Axle[2].current}\n";
       connection!.output.add(ascii.encode(temp));
       print(connection);
       await connection!.output.allSent;
@@ -85,6 +88,7 @@ class _ManualPageState extends State<ManualPage> {
           "X": x_values[j],
           "Y": y_values[j],
           "Z": z_values[j],
+          "G": g_values[j]
         });
       }
     }
@@ -95,6 +99,7 @@ class _ManualPageState extends State<ManualPage> {
       x_values.add(Axle[0].current);
       y_values.add(Axle[1].current);
       z_values.add(Axle[2].current);
+      g_values.add(grip);
     });
   }
 
@@ -103,8 +108,11 @@ class _ManualPageState extends State<ManualPage> {
       x_values.clear();
       y_values.clear();
       z_values.clear();
+      g_values.clear();
     });
   }
+
+  void idle() {}
 
   void showLimitExceededSnackbar(BuildContext context, String feedback) {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -434,6 +442,84 @@ class _ManualPageState extends State<ManualPage> {
                             ),
                           );
                         }),
+                    Padding(
+                      padding:
+                          const EdgeInsets.only(left: 20, right: 20, top: 20),
+                      child: GestureDetector(
+                        onTap: () {},
+                        child: Container(
+                          width: MediaQuery.of(context).size.width,
+                          height: MediaQuery.of(context).size.width * 0.2,
+                          decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius:
+                                  BorderRadius.all(Radius.circular(20))),
+                          child: Stack(
+                            children: [
+                              Container(
+                                child: Padding(
+                                  padding: const EdgeInsets.only(left: 20),
+                                  child: Row(
+                                    children: [
+                                      Align(
+                                        alignment: Alignment.centerLeft,
+                                        child: Row(
+                                          children: [
+                                            Padding(
+                                              padding: EdgeInsets.only(
+                                                  left: 10, right: 30),
+                                              child: Container(
+                                                width: MediaQuery.of(context)
+                                                        .size
+                                                        .width *
+                                                    0.425,
+                                                child: Text(
+                                                  "Grip",
+                                                  style: TextStyle(
+                                                      fontWeight:
+                                                          FontWeight.bold,
+                                                      fontSize: 20),
+                                                  overflow:
+                                                      TextOverflow.ellipsis,
+                                                ),
+                                              ),
+                                            ),
+                                            LiteRollingSwitch(
+                                              width: 118,
+                                              value: false,
+                                              textOn: "On",
+                                              textOff: "Off",
+                                              colorOn: Colors.green,
+                                              colorOff: Colors.red,
+                                              iconOn: Icons.done,
+                                              iconOff: Icons.offline_bolt,
+                                              textSize: 18,
+                                              onChanged: (bool position) {
+                                                setState(() {
+                                                  if (position) {
+                                                    grip = 1;
+                                                  } else {
+                                                    grip = 0;
+                                                  }
+                                                  _sendData();
+                                                });
+                                              },
+                                              onTap: idle,
+                                              onDoubleTap: idle,
+                                              onSwipe: idle,
+                                            )
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
                     Row(
                       children: [
                         Padding(

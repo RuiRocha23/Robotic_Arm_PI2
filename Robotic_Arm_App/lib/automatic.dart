@@ -73,7 +73,7 @@ class _AutomaticPageState extends State<AutomaticPage> {
 
       programData.forEach((positionName, positionData) {
         String temp =
-            "${positionData['X']} ${positionData['Y']} ${positionData['Z']}\n";
+            "${positionData['G']} ${positionData['X']} ${positionData['Y']} ${positionData['Z']}\n";
         _sendData(temp);
       });
     } else {
